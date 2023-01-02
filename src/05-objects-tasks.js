@@ -109,33 +109,116 @@ function fromJSON(proto, json) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  order: 0,
+  selector: '',
+
+  isMoreOrder(orderInElement) {
+    if (this.order > orderInElement) {
+      throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    }
+    return true;
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  isInsert(orderInElement) {
+    if (this.order !== orderInElement) return true;
+    throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    const elem = Object.create(this, {
+      order: {
+        value: 1,
+      },
+      selector: {
+        value: `${this.selector}${value}`,
+      },
+    });
+    this.isMoreOrder(elem.order);
+    this.isInsert(elem.order);
+    return elem;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    const elem = Object.create(this, {
+      order: {
+        value: 2,
+      },
+      selector: {
+        value: `${this.selector}#${value}`,
+      },
+    });
+    this.isMoreOrder(elem.order);
+    this.isInsert(elem.order);
+    return elem;
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    const elem = Object.create(this, {
+      order: {
+        value: 3,
+      },
+      selector: {
+        value: `${this.selector}.${value}`,
+      },
+    });
+    this.isMoreOrder(elem.order);
+    return elem;
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    const elem = Object.create(this, {
+      order: {
+        value: 4,
+      },
+      selector: {
+        value: `${this.selector}[${value}]`,
+      },
+    });
+    this.isMoreOrder(elem.order);
+    return elem;
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    const elem = Object.create(this, {
+      order: {
+        value: 5,
+      },
+      selector: {
+        value: `${this.selector}:${value}`,
+      },
+    });
+    this.isMoreOrder(elem.order);
+    return elem;
   },
+
+  pseudoElement(value) {
+    const elem = Object.create(this, {
+      order: {
+        value: 6,
+      },
+      selector: {
+        value: `${this.selector}::${value}`,
+      },
+    });
+    this.isMoreOrder(elem.order);
+    this.isInsert(elem.order);
+    return elem;
+  },
+
+  combine(selector1, combinator, selector2) {
+    const elem = Object.create(this, {
+      selector: {
+        value: `${selector1.selector} ${combinator} ${selector2.selector}`,
+      },
+    });
+    return elem;
+  },
+
+  stringify() {
+    return this.selector;
+  },
+
+
 };
 
 module.exports = {
